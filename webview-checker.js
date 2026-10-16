@@ -83,54 +83,23 @@
 
     const overlay = document.createElement("div");
     overlay.id = "inapp-blocking-overlay";
-    overlay.className = "fixed inset-0 bg-black/90 z-[99999] flex flex-col items-center justify-center p-6 text-center text-zinc-100 font-sans backdrop-blur-lg animate-in fade-in duration-200";
-
+    overlay.className = "ft-inapp";
     overlay.innerHTML = `
-      <!-- 우측 상단 화살표 안내 -->
-      ${arrowPosition === "top-right" ? `
-      <div class="absolute top-4 right-4 flex items-center space-x-1.5 bg-sky-500/20 border border-sky-400/30 px-3.5 py-2 rounded-xl animate-bounce">
-        <span class="text-xs font-semibold text-sky-300">여기를 탭하세요</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-      </div>` : ""}
-
-      <div class="max-w-sm w-full bg-[#121215] border border-[#27272a] rounded-2xl p-6 shadow-2xl space-y-5 relative">
-        <div class="w-12 h-12 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-xl mx-auto flex items-center justify-center shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-        </div>
-
-        <div class="space-y-2">
-          <div class="inline-block bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
-            ${appName} 감지
-          </div>
-          <h3 class="text-base font-bold text-zinc-100 tracking-tight">Safari 기본 브라우저로 접속해 주세요</h3>
-          <p class="text-xs text-zinc-400 leading-relaxed">
-            ${appName} 내부에서는 카메라 권한이 차단되어<br>스탬프 QR 코드 스캔이 동작하지 않습니다.
-          </p>
-        </div>
-
-        <div class="bg-[#18181b] border border-[#27272a] rounded-xl p-4 text-xs text-zinc-300 leading-relaxed space-y-1">
-          <p class="text-[11px] text-zinc-400">${menuGuide}</p>
-        </div>
-
-        <div class="space-y-2 pt-1">
-          <button id="btn-inapp-copy-url" class="w-full bg-sky-600 hover:bg-sky-500 active:scale-[0.98] text-white font-semibold py-3 px-4 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
-            <span id="btn-inapp-copy-text">웹사이트 주소 (URL) 복사하기</span>
-          </button>
-          <p class="text-[10px] text-zinc-500">복사 후 Safari 또는 Chrome 주소창에 붙여넣으세요.</p>
-        </div>
-      </div>
-
-      <!-- 우측 하단 화살표 안내 (네이버용) -->
-      ${arrowPosition === "bottom-right" ? `
-      <div class="absolute bottom-6 right-6 flex items-center space-x-1.5 bg-sky-500/20 border border-sky-400/30 px-3.5 py-2 rounded-xl animate-bounce">
-        <span class="text-xs font-semibold text-sky-300">하단 메뉴 탭</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="7" x2="17" y2="17"></line><polyline points="17 7 17 17 7 17"></polyline></svg>
-      </div>` : ""}
-    `;
-
-    document.body.appendChild(overlay);
-
+      <section class="ft-modal" role="dialog" aria-modal="true" aria-label="외부 브라우저 안내">
+        <h2>기본 브라우저에서 열어 주세요</h2>
+        <p>${appName} 안에서는 카메라 사용이 제한될 수 있어요.</p>
+        <p>${menuGuide}</p>
+        <button id="btn-inapp-copy-url" type="button" class="ft-primary"><span id="btn-inapp-copy-text">웹사이트 주소 복사하기</span></button>
+        <p class="ft-small-note">복사한 주소를 Safari 또는 Chrome 주소창에 붙여넣어 주세요.</p>
+      </section>`;
+    const root = document.getElementById("club-festival-suite") || document.body;
+    root.appendChild(overlay);
+    const panel = document.getElementById("ft-page");
+    if (panel) panel.inert = true;
+    document.body.classList.add("ft-scroll-lock");
+    const copyButton = overlay.querySelector("button");
+    copyButton.focus();
+    overlay.addEventListener("keydown", event => { if (event.key === "Tab") { event.preventDefault(); copyButton.focus(); } });
     const btnCopy = document.getElementById("btn-inapp-copy-url");
     if (btnCopy) {
       btnCopy.addEventListener("click", async () => {
@@ -147,12 +116,10 @@
           }
           const textSpan = document.getElementById("btn-inapp-copy-text");
           if (textSpan) textSpan.innerText = "✓ 주소가 복사되었습니다!";
-          btnCopy.classList.remove("bg-sky-600");
-          btnCopy.classList.add("bg-emerald-600");
+
           setTimeout(() => {
             if (textSpan) textSpan.innerText = "웹사이트 주소 (URL) 복사하기";
-            btnCopy.classList.remove("bg-emerald-600");
-            btnCopy.classList.add("bg-sky-600");
+
           }, 3000);
         } catch (err) {
           alert("주소 복사 실패: 주소창의 링크를 직접 복사해 주세요.");
