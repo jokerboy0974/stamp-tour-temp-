@@ -1,113 +1,87 @@
-# 🎪 페스티벌 스탬프 투어 및 통합 보안 관제 시스템 (Festival Stamp Tour & SOC System)
+# 동아리 발표회 스탬프 투어
 
-학교 및 기관 축제/행사용 **실시간 QR 스탬프 투어 및 통합 보안 관제 시스템**입니다.  
-Vanilla HTML/JS, Tailwind CSS, 그리고 Supabase(PostgreSQL, Auth, Realtime, RPC, RLS)를 기반으로 구축되었습니다.
+학생 도장판과 부스 운영진·총괄 관리자 화면을 제공하는 정적 웹앱입니다. 기존 `jokerboy0974/stamp-tour-temp-`의 Supabase 기능에 C안 **동아리 스티커북** UI를 적용했습니다. 별도 프론트엔드 빌드 과정은 없습니다.
 
----
+변경 전 원본은 [1.0.0 릴리스](https://github.com/jokerboy0974/stamp-tour-temp-/releases/tag/v1.0.0)에 보존되어 있습니다.
 
-## 🌟 주요 특징 및 기능
+## 화면
 
-### 1. 3계층 역할 분리 및 보안 아키텍처
-* **L1 (학생 모듈 - `index.html` / `student.js`):**
-  - 학번 5자리 + 이름 기반 스탬프 도장판 자동 동기화
-  - **부스 위치 텍스트 뱃지 안내:** 도장판 카드에서 각 부스의 상세 위치(예: "공학관 1층 로비", "야외 잔디광장" 등)를 핀 아이콘과 함께 직관적으로 확인
-  - 모바일 카메라를 통한 1분 만료 QR 코드 스캔 및 비상 6자리 OTP 수동 인증
-  - PWA(Progressive Web App) Standalone 지원 (홈 화면에 앱으로 추가하여 풀스크린 UX 제공)
-  - 인앱 브라우저(카카오톡/인스타 등) 감지 시 외부 브라우저(Safari/Chrome) 자동 탈출 및 카메라 차단 우회 가이드 제공
-* **L2 (부스 운영진 콘솔 - `booth.html` / `booth.js`):**
-  - 부스 방문 학생을 위한 60초 만료 일회용 동적 QR 코드 발급
-  - 카메라 고장 학생을 위한 비상 PIN 번호 노출 모드
-  - 실시간 방문자 수 및 코드 암호화 주기 카운팅
-  - **단일 기기 세션 제어 (1계정 1기기):** 다른 기기에서 중복 로그인 시 이전 기기 즉각 자동 로그아웃
-* **L3 (총괄 관리자 관제탑 - `admin.html` / `admin.js`):**
-  - 실시간 전체 통계 메트릭 (총 적립 건수, 활성 부스 수, 전 부스 완주 학생 수, 차단된 보안 위협)
-  - **과거 블랙박스 로그 20건 선행 로딩** 및 실시간 감사 로그 스트리밍
-  - L2 부스 운영진 가입 신청 승인/반려 관리
-  - 해킹 시뮬레이션 및 테스트 데이터 주입 도구 탑재
-* **통합 인증 포털 (`portal.html` / `portal.js`):**
-  - L2 / L3 전용 보안 터널 로그인 및 권한/승인 상태 2단계 교차 검증
-  - 고유 세션 ID 발급 및 단일 기기 세션 동기화
+| 주소 | 용도 |
+|---|---|
+| `index.html` | 학번·이름 등록, 도장판, QR 스캔·수동 코드, 학생·동아리 랭킹, 하단 크레딧 |
+| `portal.html` | 부스 담당자 로그인 |
+| `portal.html?role=admin` | 총괄 관리자 로그인 |
+| `booth.html?boothId=<실제 부스 ID>` | 담당 부스 QR·6자리 코드, 만료 시간, 적립 학생 수 |
+| `admin.html` | 행사 지표, 부스별 현황, 인증 기록, 전체 학생 랭킹·검색 |
 
-### 2. UX 및 디자인 고도화
-* **다크 / 라이트 모드 (`theme.js`):** 깜빡임(FOUC) 없는 시스템 테마 감지 및 원클릭 테마 전환 토글 버튼 지원
-* **중앙 텍스트/i18n 관리 (`config.js`):** 축제 명칭, 안내 문구, 에러 메시지를 단일 객체(`window.APP_CONFIG`)에서 관리하여 차기 행사 시 유지보수 극대화
-* **PWA & 파비콘:** Web App Manifest, Service Worker, 192/512px 앱 아이콘 및 파비콘 완비
+모든 화면은 라이트 전용입니다. 관리자 화면은 창 너비에 따라 데스크톱·모바일 배치로 바뀌고, 학생·부스 운영진 화면은 큰 창에서도 모바일 중심 너비를 유지합니다.
 
----
+## 실제 서버에 연결해 실행
 
-## 📁 폴더 및 파일 구조
+기존 `supabase-init.js`와 `config.js`는 유지했습니다. 동아리 랭킹은 기존 학생 권한으로 볼 수 없는 전체 방문 수가 필요하므로, 개인정보 없이 집계만 반환하는 `get_club_leaderboard()`와 학생 공동 순위 집계용 `get_stamp_podium()` 함수를 추가했습니다. 기존 테이블과 RLS 정책은 변경하지 않습니다.
 
-```text
-stamp-tour/
-├── assets/
-│   └── icons/              # Favicon, Apple Touch Icon, PWA 192x192, 512x512 아이콘
-├── config.js               # 축제 명칭, 문구 및 다국어 중앙 설정 모듈
-├── theme.js                # 다크/라이트 테마 제어 모듈
-├── webview-checker.js      # 인앱 브라우저 감지 및 외부 브라우저 탈출 모듈
-├── manifest.json           # PWA 웹앱 매니페스트
-├── service-worker.js       # PWA 서비스 워커
-├── supabase-init.js        # Supabase 클라이언트 전역(window.supabase) 안전 초기화
-├── index.html / student.js # [L1] 학생용 스탬프 적립판 및 QR 스캐너
-├── booth.html / booth.js   # [L2] 부스 운영진 콘솔 (1분 만료 QR 발급)
-├── admin.html / admin.js   # [L3] 총괄 관리자 실시간 보안 통합 관제탑
-├── portal.html / portal.js # [공통] L2/L3 통합 보안 로그인 포털
-├── schema.sql              # Supabase 전체 DB 세팅 SQL (테이블, RPC, RLS, Realtime)
-└── README.md               # 프로젝트 문서
+기존 운영 DB에는 먼저 `migrations/20261016_01_rankings.sql` 파일만 Supabase SQL Editor에서 한 번 실행합니다. 이 마이그레이션은 테이블이나 기존 기록을 초기화하지 않습니다. 새 DB를 구성하는 경우에는 함수가 포함된 `schema.sql`을 사용합니다. 이 작업본에서는 운영 DB에 SQL을 실행하지 않았습니다.
+
+1. `supabase-init.js`의 프로젝트 URL·공개 키가 사용할 Supabase 프로젝트와 일치하는지 확인합니다.
+2. `config.js`에서 행사명과 제작진을 관리하고, 부스 이름·위치는 기존 `clubs` 데이터로 관리합니다.
+3. 프로젝트 폴더에서 정적 서버를 실행합니다.
+
+```sh
+python3 -m http.server 8880 --bind 127.0.0.1
 ```
 
----
+`http://127.0.0.1:8880/index.html`을 엽니다. 이 실행 방식은 **실제 서버에 연결**됩니다. 운영진은 실제 비밀번호와 L2/L3 권한이 필요합니다. QR 코드와 적립도 실제 데이터를 사용합니다. 배포 시에는 HTTPS를 사용합니다.
 
-## 🗄️ 데이터베이스 스키마 명세 (`schema.sql`)
+새 Supabase 프로젝트를 구성하는 경우에는 기존 `schema.sql`과 Auth 설정, 운영진 계정의 `users.role`, `is_approved`, `club_id`, Realtime 설정을 별도로 구성해야 합니다. UI 검토를 위해 운영 DB를 초기화할 필요는 없습니다.
 
-### 1. 테이블 정의
-| 테이블명 | 설명 | 주요 컬럼 |
-| :--- | :--- | :--- |
-| `clubs` | 동아리/부스 기본 정보 및 위치 | `club_id` (PK), `name`, `location` (부스 위치 텍스트 뱃지), `created_at` |
-| `users` | 사용자/운영진 프로필 및 권한 | `id` (PK), `student_id` (Unique/Email), `name`, `role` (L1/L2/L3), `is_approved`, `club_id`, `active_session_id` |
-| `clubs_status` | 부스 실시간 OTP 및 상태 | `club_id` (PK/FK), `current_otp`, `otp_expires_at`, `last_login_at` |
-| `stamps` | 학생 스탬프 적립 내역 | `id` (PK), `student_id`, `club_id` (FK), `created_at`, Unique(`student_id`, `club_id`) |
-| `stamp_logs` | 실시간 보안 감사 및 시도 로그 | `id` (PK), `student_id`, `club_id`, `status`, `created_at` |
+## 예시 데이터로 UI 검토
 
-### 2. 핵심 함수 및 보안 로직
-* **`check_otp_and_stamp(p_club_id, p_input_otp)` (RPC / SECURITY DEFINER):**
-  - 1. L1 학생 권한 검증 (`ERROR_NOT_A_STUDENT` 차단)
-  - 2. 부스 6자리 OTP 일치 여부 검증 (`ERROR_WRONG_CODE`)
-  - 3. 60초 유효 시간 만료 검증 (`ERROR_EXPIRED_CODE`)
-  - 4. 중복 적립 검증 (`ALREADY_STAMPED`)
-  - 5. `stamps` 및 `stamp_logs` 원자적 적립 트랜잭션 실행
-* **`handle_new_user()` (트리거 함수):**
-  - Supabase Auth 회원가입 발생 시 `public.users`에 역할과 승인 상태를 자동으로 동기화
+실제 서버를 사용하지 않는 검토 화면은 아래 명령으로 실행합니다. Python 3.9 이상이 필요하며 npm 패키지를 설치하지 않아도 됩니다.
 
----
-
-## 🚀 시작 및 배포 가이드
-
-### 1. Supabase 프로젝트 설정
-1. [Supabase](https://supabase.com) 프로젝트를 생성합니다.
-2. 대시보드의 **SQL Editor**에 [`schema.sql`](./schema.sql) 파일의 내용을 붙여넣고 `RUN`을 실행합니다.
-3. **Authentication Settings:**
-   - 대시보드 `Authentication -> Providers -> Email`에서 **Confirm email** 옵션을 **OFF**로 설정합니다. (가상 이메일 기반 가입 시 429 Rate Limit 방지)
-4. **초기 관리자(L3) 계정 생성:**
-   - `Authentication -> Users`에서 `admin@festival.com` 유저를 생성합니다.
-   - `public.users` 테이블에서 해당 레코드의 `role`을 `'L3'`, `is_approved`를 `true`로 지정합니다.
-
-### 2. 프론트엔드 환경 설정
-1. [`supabase-init.js`](./supabase-init.js) 파일을 열어 본인 프로젝트의 URL과 Anon Key를 입력합니다:
-   ```javascript
-   const SUPABASE_URL = "https://your-project-id.supabase.co/";
-   const SUPABASE_ANON_KEY = "your-anon-publishable-key";
-   ```
-2. 축제 명칭 및 문구를 변경하려면 [`config.js`](./config.js)를 수정합니다.
-
-### 3. 로컬 실행
-별도의 빌드 과정 없이 정적 웹 서버(Live Server, Vercel, Netlify, GitHub Pages 등)로 즉시 배포 및 실행이 가능합니다.
-
-```bash
-# npx serve를 이용한 로컬 테스트 예시
-npx -y serve ./
+```sh
+python3 tests/review_server.py
 ```
 
----
+`http://127.0.0.1:8877/review/index.html`을 엽니다. 상단 검토 메뉴에서 학생·부스·관리자·로그인 화면을 이동할 수 있습니다. 운영진 검토 비밀번호는 `review-only`입니다.
 
-## 🔒 라이선스
-MIT License. 자유롭게 수정 및 배포할 수 있습니다.
+이 서버는 HTML에서 실제 Supabase SDK와 초기화를 제외하고, `tests/fixture.js`의 예시 응답을 연결합니다. 화면 이동·발급·만료·검색 등을 체험할 수 있으며 카메라도 대역입니다. 새로고침하면 예시 상태가 초기화됩니다. 실제 QR 왕복 적립이나 다른 기기 간 동기화를 검증하는 용도는 아닙니다. 검토 서버의 변경은 실제 서비스 HTML에 포함되지 않습니다.
+
+## 자동 검증
+
+검증 환경: Node.js 24.22.0. `jsdom`은 개발 검증에만 사용하며 서비스 화면에는 로드하지 않습니다.
+
+```sh
+npm ci
+npm test
+npm run test:sql
+```
+
+학생 인증, 서버 성공 이후 적립, 중복 제출·만료 처리, 학생 랭킹 마스킹·TOP 20 밖의 내 순위, 동아리 랭킹 정렬·공동 순위·방문 0건·오류 재시도·하단 크레딧, 카메라 해제, 운영진 권한·세션 종료, QR/숫자 전환, 기록 중복·화면 비우기, 조회 실패·재시도, 1,000건 초과 조회를 격리된 서버 대역으로 확인합니다.
+
+## 동아리 랭킹
+
+학생 화면의 세 번째 탭은 동아리 랭킹입니다. 동아리 이름·위치·방문 학생 수를 전체 이름으로 표시하며, 도장을 적립한 학생 수 내림차순으로 정렬합니다. 같은 방문 수는 공동 순위이고, 방문이 없는 부스는 순위를 표시하지 않습니다. 중복 적립 시도·만료 코드는 방문 수에 포함하지 않습니다.
+
+탭을 열거나 새로고침 버튼을 누를 때, 다른 앱에서 돌아올 때 최신 집계를 조회합니다. 동아리 집계 응답에는 학생 이름·학번·개별 적립 목록이 포함되지 않습니다. 학생 개인 랭킹의 마스킹은 유지합니다. 크레딧은 각 학생 탭 하단의 텍스트 버튼으로 열립니다.
+
+두 랭킹의 상단 시상대는 서로 다른 1~3위를 한 칸씩 표시합니다. 공동 순위라면 대표 한 명·한 부스와 나머지 수를 `대표 이름 외 2명`, `대표 부스 외 2곳`으로 표시하고, 단독 순위는 이름만 표시합니다. 학생 시상대는 TOP 20 목록과 별개로 전체 공동 순위 인원을 집계하며 학생 이름 가리기를 유지합니다. 하단 목록에서는 각 학생·부스를 개별 행으로 볼 수 있습니다. 관리자 학생 시상대에도 같은 묶음 표시를 적용했습니다.
+
+예시 검토 바로가기:
+
+- 동아리 공동 순위: `http://127.0.0.1:8877/review/index.html?tab=clubs&example=ties`
+- 학생 공동 순위: `http://127.0.0.1:8877/review/index.html?tab=ranking&example=ties`
+
+`npm run test:sql`은 마이그레이션의 조회문을 SQLite 메모리 DB에서 실행해 집계·정렬·마스킹 결과를 확인하고, 새 DB용 스키마와 함수 내용이 같은지 검사합니다. PostgreSQL 함수 생성·실행 권한·RLS까지 검증하는 운영 DB 테스트는 아닙니다.
+
+## 파일 구성
+
+- `styles.css`, `ui-shared.js`: C안 스타일, 공통 화면·모달·오류 표시.
+- `app-service.js`: 기존 Supabase 인증·조회·RPC·Realtime 연결.
+- `student.js`, `portal.js`, `booth.js`, `admin.js`: 화면별 표시와 상호작용.
+- `pwa-ui.js`, `webview-checker.js`: 홈 화면 추가·외부 브라우저 안내.
+- `service-worker.js`, `manifest.json`, `assets/`: 정적 파일·설치 정보·아이콘.
+- `tests/`: 검증 코드와 실제 서버에 연결하지 않는 검토 도구.
+- `migrations/20261016_01_rankings.sql`: 기존 DB용 동아리 방문 집계·학생 공동 순위 시상대 함수 추가.
+- `UI-INTEGRATION.md`: 적용 범위, 검증 결과와 운영 확인 항목.
+
+외부 폰트·Supabase SDK·QR 라이브러리는 CDN을 사용합니다. 기존 서비스 워커를 유지했으며 완전한 오프라인 적립은 제공하지 않습니다. 실제 계정 로그인, 휴대폰 카메라 QR 적립, 기기별 PWA 설치는 운영 환경에서 최종 확인해야 합니다.
